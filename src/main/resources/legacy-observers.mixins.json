@@ -1,0 +1,21 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "legacy.observers.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"common.BlockMixin",
+		"common.CraftingManagerMixin",
+		"common.ItemMixin",
+		"common.RedstoneWireBlockMixin",
+		"common.ResourcePackInvoker",
+		"common.WorldMixin"
+	],
+	"client": [
+		"client.ItemRendererMixin",
+		"client.MinecraftMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
