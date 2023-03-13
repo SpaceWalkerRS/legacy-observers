@@ -1,0 +1,33 @@
+{
+	"schema_version": 1,
+	"quilt_loader": {
+		"group": "legacy.observers",
+		"id": "legacy-observers",
+		"version": "${version}",
+		"metadata": {
+			"name": "Legacy Observers",
+			"description": "Bringing observers to legacy versions.",
+			"contributors": {
+				"Space Walker": "Owner"
+			},
+			"contact": {
+				"homepage": "https://modrinth.com/mod/legacy-observers",
+				"issues": "https://github.com/SpaceWalkerRS/legacy-observers/issues",
+				"sources": "https://github.com/SpaceWalkerRS/legacy-observers"
+			},
+			"icon": "assets/legacy/observers/icon.png"
+		},
+		"intermediate_mappings": "net.fabricmc:intermediary",
+		"depends": [
+			{
+				"id": "quilt_loader",
+				"versions": ">=0.17.6-"
+			},
+			{
+				"id": "minecraft",
+				"versions": "1.8.x"
+			}
+		]
+	},
+	"mixin": "legacy-observers.mixins.json"
+}
