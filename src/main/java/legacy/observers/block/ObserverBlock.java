@@ -70,17 +70,17 @@ public class ObserverBlock extends Block {
 	}
 
 	@Override
-	public boolean isPowerSource() {
+	public boolean isPowerSource(BlockState state) {
 		return true;
 	}
 
 	@Override
-	public int getEmittedStrongPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
-		return getEmittedWeakPower(world, pos, state, dir);
+	public int getEmittedStrongPower(BlockState state, IWorld world, BlockPos pos, Direction dir) {
+		return state.getEmittedWeakPower(world, pos, dir);
 	}
 
 	@Override
-	public int getEmittedWeakPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
+	public int getEmittedWeakPower(BlockState state, IWorld world, BlockPos pos, Direction dir) {
 		return state.get(POWERED) && state.get(FACING) == dir ? 15 : 0;
 	}
 
@@ -104,7 +104,7 @@ public class ObserverBlock extends Block {
 
 	@Override
 	public BlockState getPlacementState(World world, BlockPos pos, Direction dir, float dx, float dy, float dz, int metadata, LivingEntity entity) {
-		return defaultState().set(FACING, PistonBaseBlock.getFacingForPlacement(world, pos, entity).getOpposite());
+		return defaultState().set(FACING, PistonBaseBlock.getFacingForPlacement(pos, entity).getOpposite());
 	}
 
 	@Override
