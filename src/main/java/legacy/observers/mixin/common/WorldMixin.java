@@ -13,16 +13,13 @@ import legacy.observers.world.ModWorld;
 import legacy.observers.world.SetBlockFlags;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.BlockState;
 import net.minecraft.util.crash.CashReportCategory;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Directions;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldData;
-import net.minecraft.world.gen.WorldGeneratorType;
 
 @Mixin(World.class)
 public abstract class WorldMixin implements IWorld, ModWorld {
@@ -30,40 +27,63 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Shadow private boolean isClient;
 	@Shadow private WorldData data;
 
-	@Shadow private void updateBlock(BlockPos pos, Block neighborBlock) { }
+	@Shadow private void updateBlock(int x, int y, int z, Block neighborBlock) { }
 
 	@Redirect(
-		method = "setBlockState",
+		method = "setBlockWithMetadata",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/World;onBlockChanged(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V"
+			target = "Lnet/minecraft/world/World;onBlockChanged(IIILnet/minecraft/block/Block;)V"
 		)
 	)
-	private void notifyBlockChanged(World world, BlockPos pos, Block block) {
-		onBlockChanged(pos, block, true);
+	private void notifyBlockChanged(World world, int x, int y, int z, Block block) {
+		onBlockChanged(x, y, z, block, true);
 	}
 
 	@Inject(
-		method = "setBlockState",
+		method = "setBlockWithMetadata",
 		at = @At(
 			value = "RETURN"
 		)
 	)
-	private void updateObserversOnBlockChange(BlockPos pos, BlockState state, int flags, CallbackInfoReturnable<Boolean> cir) {
+	private void updateObserversOnBlockChange(int x, int y, int z, Block block, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
 		if (!isClient && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
-			updateObservers(pos, state.getBlock());
+			updateObservers(x, y, z, block);
+		}
+	}
+
+	@Redirect(
+		method = "setBlockMetadata",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/world/World;onBlockChanged(IIILnet/minecraft/block/Block;)V"
+		)
+	)
+	private void notifyBlockMetadataChanged(World world, int x, int y, int z, Block block) {
+		onBlockChanged(x, y, z, block, true);
+	}
+
+	@Inject(
+		method = "setBlockMetadata",
+		at = @At(
+			value = "RETURN"
+		)
+	)
+	private void updateObserversOnBlockMetadataChange(int x, int y, int z, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
+		if (!isClient && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
+			updateObservers(x, y, z, getBlock(x, y, z));
 		}
 	}
 
 	@Inject(
-		method = "onBlockChanged(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V",
+		method = "onBlockChanged(IIILnet/minecraft/block/Block;)V",
 		cancellable = true,
 		at = @At(
 			value = "HEAD"
 		)
 	)
-	private void onBlockChanged(BlockPos pos, Block block, CallbackInfo ci) {
-		onBlockChanged(pos, block, false);
+	private void onBlockChanged(int x, int y, int z, Block block, CallbackInfo ci) {
+		onBlockChanged(x, y, z, block, false);
 		ci.cancel();
 	}
 
@@ -74,49 +94,47 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 			value = "HEAD"
 		)
 	)
-	private void updateNeighbors(BlockPos pos, Block block, CallbackInfo ci) {
-		updateNeighbors(pos, block, false);
+	private void updateNeighbors(int x, int y, int z, Block block, CallbackInfo ci) {
+		updateNeighbors(x, y, z, block, false);
 		ci.cancel();
 	}
 
 	@Override
-	public void onBlockChanged(BlockPos pos, Block block, boolean updateObservers) {
-		if (data.getGeneratorType() != WorldGeneratorType.DEBUG_ALL_BLOCK_STATES) {
-			updateNeighbors(pos, block, updateObservers);
-		}
+	public void onBlockChanged(int x, int y, int z, Block block, boolean updateObservers) {
+		updateNeighbors(x, y, z, block, updateObservers);
 	}
 
 	@Override
-	public void updateNeighbors(BlockPos pos, Block block, boolean updateObservers) {
-		for (Direction dir : UPDATE_ORDER) {
-			updateBlock(pos.offset(dir), block);
+	public void updateNeighbors(int x, int y, int z, Block block, boolean updateObservers) {
+		for (int dir : UPDATE_ORDER) {
+			updateBlock(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block);
 		}
 		if (updateObservers) {
-			updateObservers(pos, block);
+			updateObservers(x, y, z, block);
 		}
 	}
 
 	@Override
-	public void updateObservers(BlockPos pos, Block block) {
-		for (Direction dir : UPDATE_ORDER) {
-			updateObserver(pos.offset(dir), block, pos);
+	public void updateObservers(int x, int y, int z, Block block) {
+		for (int dir : UPDATE_ORDER) {
+			updateObserver(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block, x, y, z);
 		}
 	}
 
 	@Override
-	public void updateObserver(BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
+	public void updateObserver(int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
 		if (isClient) {
 			return;
 		}
 
-		BlockState state = getBlockState(pos);
+		Block block = getBlock(x, y, z);
 
-		if (state.getBlock() != ModBlocks.OBSERVER) {
+		if (block != ModBlocks.OBSERVER) {
 			return;
 		}
 
 		try {
-			ModBlocks.OBSERVER.update(state, (World)(Object)this, pos, neighborBlock, neighborPos);
+			ModBlocks.OBSERVER.update((World)(Object)this, x, y, z, neighborBlock, neighborX, neighborY, neighborZ);
 		} catch (Throwable t) {
 			CrashReport report = CrashReport.of(t, "Exception while updating neighbors");
 			CashReportCategory category = report.addCategory("Block being updated");
@@ -128,7 +146,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 					return "ID #" + Block.getRawId(neighborBlock);
 				}
 			});
-			CashReportCategory.addBlockDetails(category, pos, state);
+			CashReportCategory.addBlockDetails(category, x, y, z, block, getBlockMetadata(x, y, z));
 
 			throw new CrashException(report);
 		}

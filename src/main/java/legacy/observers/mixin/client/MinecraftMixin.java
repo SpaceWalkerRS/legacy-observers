@@ -22,12 +22,12 @@ public class MinecraftMixin {
 	private IResourcePack modResourcePack = new ModResourcePack();
 
 	@Inject(
-		method = "init",
+		method = "addDefaultResourcePacks",
 		at = @At(
 			value = "HEAD"
 		)
 	)
-	private void init(CallbackInfo ci) {
+	private void addDefaultResourcePacks(CallbackInfo ci) {
 		defaultResourcePacks.add(modResourcePack);
 	}
 }

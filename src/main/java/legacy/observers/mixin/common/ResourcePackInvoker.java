@@ -13,7 +13,7 @@ import net.minecraft.client.resource.pack.ResourcePack;
 public interface ResourcePackInvoker {
 
 	@Invoker("getMetadataSection")
-	public static <T extends ResourceMetadataSection> T invokeGetMetadataSection(ResourceMetadataSerializerRegistry metadataSerializers, InputStream file, String name) {
+	public static ResourceMetadataSection invokeGetMetadataSection(ResourceMetadataSerializerRegistry metadataSerializers, InputStream file, String name) {
 		throw new AssertionError();
 	}
 }

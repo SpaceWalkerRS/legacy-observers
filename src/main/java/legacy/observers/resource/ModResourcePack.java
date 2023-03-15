@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
+import javax.imageio.ImageIO;
 
-import com.mojang.blaze3d.platform.TextureUtil;
+import com.google.common.collect.ImmutableSet;
 
 import legacy.observers.mixin.common.ResourcePackInvoker;
 
@@ -26,11 +26,11 @@ public class ModResourcePack implements IResourcePack {
 	}
 
 	@Override
-	public InputStream getResource(Identifier id) throws IOException {
+	public InputStream getResource(Identifier id) {
 		InputStream resource = openResource(id);
 
 		if (resource == null) {
-			throw new FileNotFoundException(id.getPath());
+			throw new IllegalStateException(new FileNotFoundException(id.getPath()));
 		} else {
 			return resource;
 		}
@@ -51,7 +51,7 @@ public class ModResourcePack implements IResourcePack {
 	}
 
 	@Override
-	public <T extends ResourceMetadataSection> T getMetadataSection(ResourceMetadataSerializerRegistry metadataSerializers, String name) throws IOException {
+	public ResourceMetadataSection getMetadataSection(ResourceMetadataSerializerRegistry metadataSerializers, String name) {
 		try {
 			InputStream inputStream = DefaultResourcePack.class.getResourceAsStream("pack.mcmeta");
 			return ResourcePackInvoker.invokeGetMetadataSection(metadataSerializers, inputStream, name);
@@ -61,8 +61,12 @@ public class ModResourcePack implements IResourcePack {
 	}
 
 	@Override
-	public BufferedImage getIcon() throws IOException {
-		return TextureUtil.readImage(DefaultResourcePack.class.getResourceAsStream("/" + new Identifier("pack.png").getPath()));
+	public BufferedImage getIcon() {
+		try {
+			return ImageIO.read(DefaultResourcePack.class.getResourceAsStream("/" + new Identifier("pack.png").getPath()));
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	@Override

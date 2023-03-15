@@ -7,66 +7,117 @@ import legacy.observers.world.SetBlockFlags;
 import net.minecraft.block.Block;
 import net.minecraft.block.PistonBaseBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.StateDefinition;
-import net.minecraft.block.state.property.BooleanProperty;
-import net.minecraft.block.state.property.DirectionProperty;
+import net.minecraft.client.texture.ISprite;
+import net.minecraft.client.texture.SpriteLoader;
 import net.minecraft.entity.living.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.group.ItemGroup;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Directions;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 public class ObserverBlock extends Block {
 
-	public static final DirectionProperty FACING = DirectionProperty.of("facing");
-	public static final BooleanProperty POWERED = BooleanProperty.of("powered");
+	public static final int RENDER_TYPE = 42;
+
+	private static final int FACING_MASK  = 0b0111;
+	private static final int POWERED_MASK = 0b1000;
+
+	public static boolean defaultRenderType = false;
+
+	public ISprite sideSprite;
+	public ISprite topSprite;
+	public ISprite frontSprite;
+	public ISprite backSprite;
+	public ISprite backLitSprite;
 
 	public ObserverBlock() {
 		super(Material.STONE);
 
-		setDefaultState(stateDefinition.any().
-			set(FACING, Direction.SOUTH).
-			set(POWERED, false));
 		setItemGroup(ItemGroup.REDSTONE);
 	}
 
-	@Override
-	protected StateDefinition createStateDefinition() {
-		return new StateDefinition(this, FACING, POWERED);
+	public ObserverBlock spriteId(String spriteId) {
+		return (ObserverBlock)super.setSpriteId(spriteId);
 	}
 
 	@Override
-	public void tick(World world, BlockPos pos, BlockState state, Random random) {
-		if (state.get(POWERED)) {
-			world.setBlockState(pos, state.set(POWERED, false), SetBlockFlags.UPDATE_CLIENTS);
+	public ISprite getSprite(int face, int metadata) {
+		int facing = getFacing(metadata);
+
+		if (face == facing) {
+			return frontSprite;
+		}
+		if (face == Directions.OPPOSITE[facing]) {
+			return getPowered(metadata) ? backLitSprite : backSprite;
+		}
+
+		if (face < 2) {
+			return topSprite;
+		}
+		if (face > 3) {
+			return sideSprite;
+		}
+
+		return facing < 2 ? topSprite : sideSprite;
+	}
+
+	@Override
+	public void loadSprites(SpriteLoader spriteLoader) {
+		this.sideSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "side");
+		this.topSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "top");
+		this.frontSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "front");
+		this.backSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "back");
+		this.backLitSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "back" + "_" + "lit");
+	}
+
+	@Override
+	public int getRenderType() {
+		return defaultRenderType ? super.getRenderType() : RENDER_TYPE;
+	}
+
+	@Override
+	public void tick(World world, int x, int y, int z, Random random) {
+		int metadata = world.getBlockMetadata(x, y, z);
+
+		if (getPowered(metadata)) {
+			world.setBlockMetadata(x, y, z, setPowered(metadata, false), SetBlockFlags.UPDATE_CLIENTS);
 		} else {
-			world.setBlockState(pos, state.set(POWERED, true), SetBlockFlags.UPDATE_CLIENTS);
-			world.scheduleTick(pos, this, 2);
+			world.setBlockMetadata(x, y, z, setPowered(metadata, true), SetBlockFlags.UPDATE_CLIENTS);
+			world.scheduleTick(x, y, z, this, 2);
 		}
 
-		updateNeighbors(world, pos, state);
+		updateNeighbors(world, x, y, z, metadata);
 	}
 
-	public void update(BlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
-		if (!world.isClient && pos.offset(state.get(FACING)).equals(neighborPos)) {
-			update(state, world, pos);
+	public void update(World world, int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
+		if (!world.isClient) {
+			int metadata = world.getBlockMetadata(x, y, z);
+			int facing = getFacing(metadata);
+			int behindX = x + Directions.X_OFFSET[facing];
+			int behindY = y + Directions.Y_OFFSET[facing];
+			int behindZ = z + Directions.Z_OFFSET[facing];
+
+			if (neighborX == behindX && neighborY == behindY && neighborZ == behindZ) {
+				update(world, x, y, z, metadata);
+			}
 		}
 	}
 
-	private void update(BlockState state, World world, BlockPos pos) {
-		if (!state.get(POWERED)) {
-			world.scheduleTick(pos, this, 2);
+	private void update(World world, int x, int y, int z, int metadata) {
+		if (!getPowered(metadata)) {
+			world.scheduleTick(x, y, z, this, 2);
 		}
 	}
 
-	protected void updateNeighbors(World world, BlockPos pos, BlockState state) {
-		Direction facing = state.get(FACING);
-		BlockPos front = pos.offset(facing.getOpposite());
+	protected void updateNeighbors(World world, int x, int y, int z, int metadata) {
+		int facing = getFacing(metadata);
+		int frontX = x - Directions.X_OFFSET[facing];
+		int frontY = y - Directions.Y_OFFSET[facing];
+		int frontZ = z - Directions.Z_OFFSET[facing];
 
-		world.updateBlock(front, this);
-		world.updateNeighborsExcept(front, this, facing);
+		world.updateBlock(frontX, frontY, frontZ, this);
+		world.updateNeighborsExcept(frontX, frontY, frontZ, this, facing);
 	}
 
 	@Override
@@ -75,49 +126,60 @@ public class ObserverBlock extends Block {
 	}
 
 	@Override
-	public int getEmittedStrongPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
-		return getEmittedWeakPower(world, pos, state, dir);
+	public int getEmittedStrongPower(IWorld world, int x, int y, int z, int dir) {
+		return getEmittedWeakPower(world, x, y, z, dir);
 	}
 
 	@Override
-	public int getEmittedWeakPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
-		return state.get(POWERED) && state.get(FACING) == dir ? 15 : 0;
+	public int getEmittedWeakPower(IWorld world, int x, int y, int z, int dir) {
+		int metadata = world.getBlockMetadata(x, y, z);
+		return getPowered(metadata) && getFacing(metadata) == dir ? 15 : 0;
 	}
 
 	@Override
-	public void onAdded(World world, BlockPos pos, BlockState state) {
+	public void onAdded(World world, int x, int y, int z) {
 		if (!world.isClient) {
-			if (state.get(POWERED)) {
-				tick(world, pos, state, world.random);
+			int metadata = world.getBlockMetadata(x, y, z);
+
+			if (getPowered(metadata)) {
+				tick(world, x, y, z, world.random);
 			}
 
-			update(state, world, pos);
+			update(world, x, y, z, metadata);
 		}
 	}
 
 	@Override
-	public void onRemoved(World world, BlockPos pos, BlockState state) {
-		if (state.get(POWERED)) {
-			updateNeighbors(world, pos, state.set(POWERED, false));
+	public void onRemoved(World world, int x, int y, int z, Block block, int metadata) {
+		if (getPowered(metadata)) {
+			updateNeighbors(world, x, y, z, metadata);
 		}
 	}
 
 	@Override
-	public BlockState getPlacementState(World world, BlockPos pos, Direction dir, float dx, float dy, float dz, int metadata, LivingEntity entity) {
-		return defaultState().set(FACING, PistonBaseBlock.getFacingForPlacement(world, pos, entity).getOpposite());
+	public void onPlaced(World world, int x, int y, int z, LivingEntity entity, ItemStack stack) {
+		int metadata = world.getBlockMetadata(x, y, z);
+		int facing = PistonBaseBlock.getFacingForPlacement(world, x, y, z, entity);
+
+		facing = Directions.OPPOSITE[facing];
+		metadata = setFacing(metadata, facing);
+
+		world.setBlockMetadata(x, y, z, metadata, SetBlockFlags.UPDATE_CLIENTS);
 	}
 
-	@Override
-	public int getMetadataFromState(BlockState state) {
-		int metadata = state.get(FACING).getId();
-		if (state.get(POWERED))
-			metadata |= 8;
-
-		return metadata;
+	public static int getFacing(int metadata) {
+		return metadata & FACING_MASK;
 	}
 
-	@Override
-	public BlockState getStateFromMetadata(int metadata) {
-		return defaultState().set(FACING, Direction.byId(metadata & 7));
+	public static int setFacing(int metadata, int facing) {
+		return (metadata & ~FACING_MASK) | (facing & FACING_MASK);
+	}
+
+	public static boolean getPowered(int metadata) {
+		return (metadata & POWERED_MASK) != 0;
+	}
+
+	public static int setPowered(int metadata, boolean powered) {
+		return (metadata & ~POWERED_MASK) | (powered ? POWERED_MASK : 0);
 	}
 }
