@@ -32,6 +32,10 @@ public class ObserverBlock extends Block {
 		setItemGroup(ItemGroup.REDSTONE);
 	}
 
+	public Block strength(float strength) {
+		return setStrength(strength);
+	}
+
 	@Override
 	protected StateDefinition createStateDefinition() {
 		return new StateDefinition(this, FACING, POWERED);

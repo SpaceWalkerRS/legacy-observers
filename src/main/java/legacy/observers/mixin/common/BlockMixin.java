@@ -23,6 +23,6 @@ public class BlockMixin {
 		)
 	)
 	private static void init(CallbackInfo ci) {
-		register(218, "observer", new ObserverBlock().setId("observer"));
+		register(218, "observer", new ObserverBlock().strength(3.0F).setId("observer"));
 	}
 }
