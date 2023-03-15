@@ -4,27 +4,30 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import legacy.observers.block.ModBlocks;
 import legacy.observers.block.ObserverBlock;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.util.math.Direction;
+import net.minecraft.world.IWorld;
 
 @Mixin(RedstoneWireBlock.class)
 public class RedstoneWireBlockMixin {
 
 	@Inject(
-		method = "shouldConnectTo(Lnet/minecraft/block/state/BlockState;Lnet/minecraft/util/math/Direction;)Z",
+		method = "shouldConnectTo(Lnet/minecraft/world/IWorld;IIII)Z",
+		locals = LocalCapture.CAPTURE_FAILHARD,
 		cancellable = true,
 		at = @At(
-			value = "HEAD"
+			value = "FIELD",
+			target = "Lnet/minecraft/block/Blocks;REDSTONE_WIRE:Lnet/minecraft/block/RedstoneWireBlock;"
 		)
 	)
-	private static void shouldConnectTo(BlockState state, Direction dir, CallbackInfoReturnable<Boolean> cir) {
-		if (state.getBlock() == ModBlocks.OBSERVER) {
-			cir.setReturnValue(dir == state.get(ObserverBlock.FACING));
+	private static void shouldConnectTo(IWorld world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, Block neighborBlock) {
+		if (neighborBlock == ModBlocks.OBSERVER) {
+			cir.setReturnValue(side == ObserverBlock.getFacing(world.getBlockMetadata(x, y, z)));
 		}
 	}
 }

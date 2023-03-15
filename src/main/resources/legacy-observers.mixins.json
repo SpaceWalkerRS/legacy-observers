@@ -6,13 +6,12 @@
 	"mixins": [
 		"common.BlockMixin",
 		"common.CraftingManagerMixin",
-		"common.ItemMixin",
 		"common.RedstoneWireBlockMixin",
 		"common.ResourcePackInvoker",
 		"common.WorldMixin"
 	],
 	"client": [
-		"client.ItemRendererMixin",
+		"client.BlockRendererMixin",
 		"client.MinecraftMixin"
 	],
 	"injectors": {
