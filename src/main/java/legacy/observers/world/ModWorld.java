@@ -1,7 +1,5 @@
 package legacy.observers.world;
 
-import net.minecraft.block.Block;
-
 public interface ModWorld {
 
 	public static final int[] UPDATE_ORDER = {
@@ -13,12 +11,12 @@ public interface ModWorld {
 		3  // south
 	};
 
-	void onBlockChanged(int x, int y, int z, Block block, boolean updateObservers);
+	void onBlockChanged(int x, int y, int z, int blockId, boolean updateObservers);
 
-	void updateNeighbors(int x, int y, int z, Block block, boolean updateObservers);
+	void updateNeighbors(int x, int y, int z, int blockId, boolean updateObservers);
 
-	void updateObservers(int x, int y, int z, Block block);
+	void updateObservers(int x, int y, int z, int blockId);
 
-	void updateObserver(int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ);
+	void updateObserver(int x, int y, int z, int neighborBlockId, int neighborX, int neighborY, int neighborZ);
 
 }

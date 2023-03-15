@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import legacy.observers.block.ModBlocks;
 import legacy.observers.block.ObserverBlock;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.world.IWorld;
 
@@ -22,11 +21,11 @@ public class RedstoneWireBlockMixin {
 		cancellable = true,
 		at = @At(
 			value = "FIELD",
-			target = "Lnet/minecraft/block/Blocks;REDSTONE_WIRE:Lnet/minecraft/block/RedstoneWireBlock;"
+			target = "Lnet/minecraft/block/Block;REDSTONE_WIRE:Lnet/minecraft/block/RedstoneWireBlock;"
 		)
 	)
-	private static void shouldConnectTo(IWorld world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, Block neighborBlock) {
-		if (neighborBlock == ModBlocks.OBSERVER) {
+	private static void shouldConnectTo(IWorld world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, int neighborBlockId) {
+		if (neighborBlockId == ModBlocks.OBSERVER.rawId) {
 			cir.setReturnValue(side == ObserverBlock.getFacing(world.getBlockMetadata(x, y, z)));
 		}
 	}

@@ -27,17 +27,17 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Shadow private boolean isClient;
 	@Shadow private WorldData data;
 
-	@Shadow private void updateBlock(int x, int y, int z, Block neighborBlock) { }
+	@Shadow private void updateBlock(int x, int y, int z, int neighborBlockId) { }
 
 	@Redirect(
 		method = "setBlockWithMetadata",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/World;onBlockChanged(IIILnet/minecraft/block/Block;)V"
+			target = "Lnet/minecraft/world/World;onBlockChanged(IIII)V"
 		)
 	)
-	private void notifyBlockChanged(World world, int x, int y, int z, Block block) {
-		onBlockChanged(x, y, z, block, true);
+	private void notifyBlockChanged(World world, int x, int y, int z, int blockId) {
+		onBlockChanged(x, y, z, blockId, true);
 	}
 
 	@Inject(
@@ -46,9 +46,9 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 			value = "RETURN"
 		)
 	)
-	private void updateObserversOnBlockChange(int x, int y, int z, Block block, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
+	private void updateObserversOnBlockChange(int x, int y, int z, int blockId, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
 		if (!isClient && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
-			updateObservers(x, y, z, block);
+			updateObservers(x, y, z, blockId);
 		}
 	}
 
@@ -56,11 +56,11 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 		method = "setBlockMetadata",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/World;onBlockChanged(IIILnet/minecraft/block/Block;)V"
+			target = "Lnet/minecraft/world/World;onBlockChanged(IIII)V"
 		)
 	)
-	private void notifyBlockMetadataChanged(World world, int x, int y, int z, Block block) {
-		onBlockChanged(x, y, z, block, true);
+	private void notifyBlockMetadataChanged(World world, int x, int y, int z, int blockId) {
+		onBlockChanged(x, y, z, blockId, true);
 	}
 
 	@Inject(
@@ -76,14 +76,14 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	}
 
 	@Inject(
-		method = "onBlockChanged(IIILnet/minecraft/block/Block;)V",
+		method = "onBlockChanged(IIII)V",
 		cancellable = true,
 		at = @At(
 			value = "HEAD"
 		)
 	)
-	private void onBlockChanged(int x, int y, int z, Block block, CallbackInfo ci) {
-		onBlockChanged(x, y, z, block, false);
+	private void onBlockChanged(int x, int y, int z, int blockId, CallbackInfo ci) {
+		onBlockChanged(x, y, z, blockId, false);
 		ci.cancel();
 	}
 
@@ -94,59 +94,59 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 			value = "HEAD"
 		)
 	)
-	private void updateNeighbors(int x, int y, int z, Block block, CallbackInfo ci) {
-		updateNeighbors(x, y, z, block, false);
+	private void updateNeighbors(int x, int y, int z, int blockId, CallbackInfo ci) {
+		updateNeighbors(x, y, z, blockId, false);
 		ci.cancel();
 	}
 
 	@Override
-	public void onBlockChanged(int x, int y, int z, Block block, boolean updateObservers) {
-		updateNeighbors(x, y, z, block, updateObservers);
+	public void onBlockChanged(int x, int y, int z, int blockId, boolean updateObservers) {
+		updateNeighbors(x, y, z, blockId, updateObservers);
 	}
 
 	@Override
-	public void updateNeighbors(int x, int y, int z, Block block, boolean updateObservers) {
+	public void updateNeighbors(int x, int y, int z, int blockId, boolean updateObservers) {
 		for (int dir : UPDATE_ORDER) {
-			updateBlock(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block);
+			updateBlock(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], blockId);
 		}
 		if (updateObservers) {
-			updateObservers(x, y, z, block);
+			updateObservers(x, y, z, blockId);
 		}
 	}
 
 	@Override
-	public void updateObservers(int x, int y, int z, Block block) {
+	public void updateObservers(int x, int y, int z, int blockId) {
 		for (int dir : UPDATE_ORDER) {
-			updateObserver(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block, x, y, z);
+			updateObserver(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], blockId, x, y, z);
 		}
 	}
 
 	@Override
-	public void updateObserver(int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
+	public void updateObserver(int x, int y, int z, int neighborBlockId, int neighborX, int neighborY, int neighborZ) {
 		if (isClient) {
 			return;
 		}
 
-		Block block = getBlock(x, y, z);
+		int blockId = getBlock(x, y, z);
 
-		if (block != ModBlocks.OBSERVER) {
+		if (blockId != ModBlocks.OBSERVER.rawId) {
 			return;
 		}
 
 		try {
-			ModBlocks.OBSERVER.update((World)(Object)this, x, y, z, neighborBlock, neighborX, neighborY, neighborZ);
+			ModBlocks.OBSERVER.update((World)(Object)this, x, y, z, neighborBlockId, neighborX, neighborY, neighborZ);
 		} catch (Throwable t) {
 			CrashReport report = CrashReport.of(t, "Exception while updating neighbors");
 			CashReportCategory category = report.addCategory("Block being updated");
 			category.add("Source block type", () -> {
 				try {
-					return String.format("ID #%d (%s // %s)", Block.getRawId(neighborBlock), neighborBlock.getTranslationKey(),
-						neighborBlock.getClass().getCanonicalName());
+					return String.format("ID #%d (%s // %s)", neighborBlockId, Block.BY_ID[neighborBlockId].getTranslationKey(),
+						Block.BY_ID[neighborBlockId].getClass().getCanonicalName());
 				} catch (Throwable throwable) {
-					return "ID #" + Block.getRawId(neighborBlock);
+					return "ID #" + neighborBlockId;
 				}
 			});
-			CashReportCategory.addBlockDetails(category, x, y, z, block, getBlockMetadata(x, y, z));
+			CashReportCategory.addBlockDetails(category, x, y, z, blockId, getBlockMetadata(x, y, z));
 
 			throw new CrashException(report);
 		}

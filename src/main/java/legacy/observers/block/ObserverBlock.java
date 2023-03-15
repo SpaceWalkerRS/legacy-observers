@@ -31,10 +31,14 @@ public class ObserverBlock extends Block {
 	public ISprite backSprite;
 	public ISprite backLitSprite;
 
-	public ObserverBlock() {
-		super(Material.STONE);
+	public ObserverBlock(int id) {
+		super(id, Material.STONE);
 
 		setItemGroup(ItemGroup.REDSTONE);
+	}
+
+	public Block strength(float strength) {
+		return setStrength(strength);
 	}
 
 	public ObserverBlock spriteId(String spriteId) {
@@ -84,13 +88,13 @@ public class ObserverBlock extends Block {
 			world.setBlockMetadata(x, y, z, setPowered(metadata, false), SetBlockFlags.UPDATE_CLIENTS);
 		} else {
 			world.setBlockMetadata(x, y, z, setPowered(metadata, true), SetBlockFlags.UPDATE_CLIENTS);
-			world.scheduleTick(x, y, z, this, 2);
+			world.scheduleTick(x, y, z, rawId, 2);
 		}
 
 		updateNeighbors(world, x, y, z, metadata);
 	}
 
-	public void update(World world, int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
+	public void update(World world, int x, int y, int z, int neighborBlockId, int neighborX, int neighborY, int neighborZ) {
 		if (!world.isClient) {
 			int metadata = world.getBlockMetadata(x, y, z);
 			int facing = getFacing(metadata);
@@ -99,14 +103,14 @@ public class ObserverBlock extends Block {
 			int behindZ = z + Directions.Z_OFFSET[facing];
 
 			if (neighborX == behindX && neighborY == behindY && neighborZ == behindZ) {
-				update(world, x, y, z, metadata);
+				updatePowered(world, x, y, z, metadata);
 			}
 		}
 	}
 
-	private void update(World world, int x, int y, int z, int metadata) {
+	private void updatePowered(World world, int x, int y, int z, int metadata) {
 		if (!getPowered(metadata)) {
-			world.scheduleTick(x, y, z, this, 2);
+			world.scheduleTick(x, y, z, rawId, 2);
 		}
 	}
 
@@ -116,8 +120,8 @@ public class ObserverBlock extends Block {
 		int frontY = y - Directions.Y_OFFSET[facing];
 		int frontZ = z - Directions.Z_OFFSET[facing];
 
-		world.updateBlock(frontX, frontY, frontZ, this);
-		world.updateNeighborsExcept(frontX, frontY, frontZ, this, facing);
+		world.updateBlock(frontX, frontY, frontZ, rawId);
+		world.updateNeighborsExcept(frontX, frontY, frontZ, rawId, facing);
 	}
 
 	@Override
@@ -145,12 +149,12 @@ public class ObserverBlock extends Block {
 				tick(world, x, y, z, world.random);
 			}
 
-			update(world, x, y, z, metadata);
+			updatePowered(world, x, y, z, metadata);
 		}
 	}
 
 	@Override
-	public void onRemoved(World world, int x, int y, int z, Block block, int metadata) {
+	public void onRemoved(World world, int x, int y, int z, int blockId, int metadata) {
 		if (getPowered(metadata)) {
 			updateNeighbors(world, x, y, z, metadata);
 		}

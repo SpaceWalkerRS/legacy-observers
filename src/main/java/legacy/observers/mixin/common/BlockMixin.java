@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import legacy.observers.block.ObserverBlock;
+import legacy.observers.block.ModBlocks;
 
 import net.minecraft.block.Block;
 
@@ -13,16 +13,14 @@ import net.minecraft.block.Block;
 public class BlockMixin {
 
 	@Inject(
-		method = "init",
+		method = "<clinit>",
 		at = @At(
-			value = "HEAD"
+			value = "FIELD",
+			ordinal = 0,
+			target = "Lnet/minecraft/item/Item;BY_ID:[Lnet/minecraft/item/Item;"
 		)
 	)
 	private static void init(CallbackInfo ci) {
-		register(218, "observer", new ObserverBlock().spriteId("observer").setId("observer"));
-	}
-
-	private static void register(int id, String key, Block block) {
-		Block.REGISTRY.register(id, key, block);
+		ModBlocks.init();
 	}
 }

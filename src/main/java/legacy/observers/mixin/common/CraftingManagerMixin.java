@@ -8,11 +8,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import legacy.observers.block.ModBlocks;
 
-import net.minecraft.block.Blocks;
+import net.minecraft.block.Block;
 import net.minecraft.crafting.CraftingManager;
 import net.minecraft.crafting.recipe.ShapedRecipe;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 
 @Mixin(CraftingManager.class)
 public class CraftingManagerMixin {
@@ -27,6 +27,6 @@ public class CraftingManagerMixin {
 		)
 	)
 	private void init(CallbackInfo ci) {
-		registerShaped(new ItemStack(ModBlocks.OBSERVER, 1), "###", "RRQ", "###", '#', Blocks.COBBLESTONE, 'R', Items.REDSTONE, 'Q', Items.QUARTZ);
+		registerShaped(new ItemStack(ModBlocks.OBSERVER, 1), "###", "RRQ", "###", '#', Block.COBBLESTONE, 'R', Item.REDSTONE, 'Q', Item.QUARTZ);
 	}
 }
