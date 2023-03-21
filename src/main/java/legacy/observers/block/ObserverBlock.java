@@ -12,7 +12,7 @@ import net.minecraft.block.state.StateDefinition;
 import net.minecraft.block.state.property.BooleanProperty;
 import net.minecraft.block.state.property.DirectionProperty;
 import net.minecraft.entity.living.LivingEntity;
-import net.minecraft.item.group.ItemGroup;
+import net.minecraft.item.CreativeModeTab;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.IWorld;
@@ -29,7 +29,7 @@ public class ObserverBlock extends Block {
 		setDefaultState(stateDefinition.any().
 			set(FACING, Direction.SOUTH).
 			set(POWERED, false));
-		setItemGroup(ItemGroup.REDSTONE);
+		setCreativeModeTab(CreativeModeTab.REDSTONE);
 	}
 
 	public Block strength(float strength) {
@@ -67,10 +67,10 @@ public class ObserverBlock extends Block {
 
 	protected void updateNeighbors(World world, BlockPos pos, BlockState state) {
 		Direction facing = state.get(FACING);
-		BlockPos front = pos.offset(facing.getOpposite());
+		BlockPos behind = pos.offset(facing.getOpposite());
 
-		world.updateBlock(front, this);
-		world.updateNeighborsExcept(front, this, facing);
+		world.updateBlock(behind, this);
+		world.updateNeighborsExcept(behind, this, facing);
 	}
 
 	@Override

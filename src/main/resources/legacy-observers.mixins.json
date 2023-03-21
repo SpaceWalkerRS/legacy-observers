@@ -8,7 +8,6 @@
 		"common.CraftingManagerMixin",
 		"common.ItemMixin",
 		"common.RedstoneWireBlockMixin",
-		"common.ResourcePackInvoker",
 		"common.WorldMixin"
 	],
 	"client": [
