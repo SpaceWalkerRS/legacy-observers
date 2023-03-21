@@ -41,10 +41,6 @@ public class ObserverBlock extends Block {
 		return setStrength(strength);
 	}
 
-	public ObserverBlock spriteName(String spriteName) {
-		return (ObserverBlock)super.setSpriteName(spriteName);
-	}
-
 	@Override
 	public Sprite getSprite(int face, int metadata) {
 		int facing = getFacing(metadata);
@@ -68,11 +64,11 @@ public class ObserverBlock extends Block {
 
 	@Override
 	public void loadSprites(SpriteLoader loader) {
-		this.sideSprite = loader.loadSprite(getSpriteName() + "_" + "side");
-		this.topSprite = loader.loadSprite(getSpriteName() + "_" + "top");
-		this.frontSprite = loader.loadSprite(getSpriteName() + "_" + "front");
-		this.backSprite = loader.loadSprite(getSpriteName() + "_" + "back");
-		this.backLitSprite = loader.loadSprite(getSpriteName() + "_" + "back" + "_" + "lit");
+		this.sideSprite = loader.loadSprite("observer" + "_" + "side");
+		this.topSprite = loader.loadSprite("observer" + "_" + "top");
+		this.frontSprite = loader.loadSprite("observer" + "_" + "front");
+		this.backSprite = loader.loadSprite("observer" + "_" + "back");
+		this.backLitSprite = loader.loadSprite("observer" + "_" + "back" + "_" + "lit");
 	}
 
 	@Override

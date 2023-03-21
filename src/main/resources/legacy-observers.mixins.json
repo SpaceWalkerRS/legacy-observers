@@ -6,12 +6,13 @@
 	"mixins": [
 		"common.BlockMixin",
 		"common.CraftingManagerMixin",
+		"common.LanguageManagerMixin",
 		"common.RedstoneWireBlockMixin",
 		"common.WorldMixin"
 	],
 	"client": [
 		"client.BlockRendererMixin",
-		"client.MinecraftMixin"
+		"client.BuiltInTexturePackMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
