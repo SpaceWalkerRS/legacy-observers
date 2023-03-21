@@ -19,14 +19,14 @@ import net.minecraft.world.IWorld;
 public class BlockRendererMixin {
 
 	@Shadow private IWorld world;
-	@Shadow private int negZFaceRotation;
-	@Shadow private int posZFaceRotation;
-	@Shadow private int posXFaceRotation;
-	@Shadow private int negXFaceRotation;
+	@Shadow private int northFaceRotation;
+	@Shadow private int southFaceRotation;
+	@Shadow private int eastFaceRotation;
+	@Shadow private int westFaceRotation;
 	@Shadow private int topFaceRotation;
 	@Shadow private int bottomFaceRotation;
 
-	@Shadow private boolean renderNormalBlock(Block block, int x, int y, int z) { return false; }
+	@Shadow private boolean renderSimpleBlock(Block block, int x, int y, int z) { return false; }
 
 	@Inject(
 		method = "renderBlock(Lnet/minecraft/block/Block;III)Z",
@@ -34,7 +34,7 @@ public class BlockRendererMixin {
 		at = @At(
 			value = "INVOKE",
 			shift = Shift.AFTER,
-			target = "Lnet/minecraft/client/render/BlockRenderer;setBlockProperties(Lnet/minecraft/block/Block;)V"
+			target = "Lnet/minecraft/client/render/BlockRenderer;prepare(Lnet/minecraft/block/Block;)V"
 		)
 	)
 	private void renderObserverBlock(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
@@ -83,13 +83,13 @@ public class BlockRendererMixin {
 	}
 
 	@Inject(
-		method = "has3DModel(I)Z",
+		method = "isGui3D(I)Z",
 		cancellable = true,
 		at = @At(
 			value = "HEAD"
 		)
 	)
-	private static void has3DModel(int type, CallbackInfoReturnable<Boolean> cir) {
+	private static void isGui3D(int type, CallbackInfoReturnable<Boolean> cir) {
 		if (type == ObserverBlock.RENDER_TYPE) {
 			cir.setReturnValue(true);
 		}
@@ -101,15 +101,15 @@ public class BlockRendererMixin {
 
 		switch (facing) {
 		case 0: // down
-			posXFaceRotation = 1;
-			negXFaceRotation = 1;
+			eastFaceRotation = 1;
+			westFaceRotation = 1;
 
 			break;
 		case 1: // up
-			posXFaceRotation = 2;
-			negXFaceRotation = 2;
-			negZFaceRotation = 3;
-			posZFaceRotation = 3;
+			eastFaceRotation = 2;
+			westFaceRotation = 2;
+			northFaceRotation = 3;
+			southFaceRotation = 3;
 			topFaceRotation = 3;
 			bottomFaceRotation = 3;
 
@@ -134,12 +134,12 @@ public class BlockRendererMixin {
 			break;
 		}
 
-		boolean success = renderNormalBlock(block, x, y, z);
+		boolean success = renderSimpleBlock(block, x, y, z);
 
-		negZFaceRotation = 0;
-		posZFaceRotation = 0;
-		posXFaceRotation = 0;
-		negXFaceRotation = 0;
+		northFaceRotation = 0;
+		southFaceRotation = 0;
+		eastFaceRotation = 0;
+		westFaceRotation = 0;
 		topFaceRotation = 0;
 		bottomFaceRotation = 0;
 

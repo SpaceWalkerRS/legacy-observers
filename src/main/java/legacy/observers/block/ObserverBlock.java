@@ -7,11 +7,11 @@ import legacy.observers.world.SetBlockFlags;
 import net.minecraft.block.Block;
 import net.minecraft.block.PistonBaseBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.texture.ISprite;
-import net.minecraft.client.texture.SpriteLoader;
+import net.minecraft.client.render.texture.Sprite;
+import net.minecraft.client.render.texture.SpriteLoader;
 import net.minecraft.entity.living.LivingEntity;
+import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.group.ItemGroup;
 import net.minecraft.util.math.Directions;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -25,28 +25,28 @@ public class ObserverBlock extends Block {
 
 	public static boolean defaultRenderType = false;
 
-	public ISprite sideSprite;
-	public ISprite topSprite;
-	public ISprite frontSprite;
-	public ISprite backSprite;
-	public ISprite backLitSprite;
+	public Sprite sideSprite;
+	public Sprite topSprite;
+	public Sprite frontSprite;
+	public Sprite backSprite;
+	public Sprite backLitSprite;
 
 	public ObserverBlock(int id) {
 		super(id, Material.STONE);
 
-		setItemGroup(ItemGroup.REDSTONE);
+		setCreativeModeTab(CreativeModeTab.REDSTONE);
 	}
 
 	public Block strength(float strength) {
 		return setStrength(strength);
 	}
 
-	public ObserverBlock spriteId(String spriteId) {
-		return (ObserverBlock)super.setSpriteId(spriteId);
+	public ObserverBlock spriteName(String spriteName) {
+		return (ObserverBlock)super.setSpriteName(spriteName);
 	}
 
 	@Override
-	public ISprite getSprite(int face, int metadata) {
+	public Sprite getSprite(int face, int metadata) {
 		int facing = getFacing(metadata);
 
 		if (face == facing) {
@@ -67,12 +67,12 @@ public class ObserverBlock extends Block {
 	}
 
 	@Override
-	public void loadSprites(SpriteLoader spriteLoader) {
-		this.sideSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "side");
-		this.topSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "top");
-		this.frontSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "front");
-		this.backSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "back");
-		this.backLitSprite = spriteLoader.addSpriteToLoad(getSpriteId() + "_" + "back" + "_" + "lit");
+	public void loadSprites(SpriteLoader loader) {
+		this.sideSprite = loader.loadSprite(getSpriteName() + "_" + "side");
+		this.topSprite = loader.loadSprite(getSpriteName() + "_" + "top");
+		this.frontSprite = loader.loadSprite(getSpriteName() + "_" + "front");
+		this.backSprite = loader.loadSprite(getSpriteName() + "_" + "back");
+		this.backLitSprite = loader.loadSprite(getSpriteName() + "_" + "back" + "_" + "lit");
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class ObserverBlock extends Block {
 			world.setBlockMetadata(x, y, z, setPowered(metadata, false), SetBlockFlags.UPDATE_CLIENTS);
 		} else {
 			world.setBlockMetadata(x, y, z, setPowered(metadata, true), SetBlockFlags.UPDATE_CLIENTS);
-			world.scheduleTick(x, y, z, rawId, 2);
+			world.scheduleTick(x, y, z, id, 2);
 		}
 
 		updateNeighbors(world, x, y, z, metadata);
@@ -98,11 +98,11 @@ public class ObserverBlock extends Block {
 		if (!world.isClient) {
 			int metadata = world.getBlockMetadata(x, y, z);
 			int facing = getFacing(metadata);
-			int behindX = x + Directions.X_OFFSET[facing];
-			int behindY = y + Directions.Y_OFFSET[facing];
-			int behindZ = z + Directions.Z_OFFSET[facing];
+			int frontX = x + Directions.X_OFFSET[facing];
+			int frontY = y + Directions.Y_OFFSET[facing];
+			int frontZ = z + Directions.Z_OFFSET[facing];
 
-			if (neighborX == behindX && neighborY == behindY && neighborZ == behindZ) {
+			if (neighborX == frontX && neighborY == frontY && neighborZ == frontZ) {
 				updatePowered(world, x, y, z, metadata);
 			}
 		}
@@ -110,18 +110,18 @@ public class ObserverBlock extends Block {
 
 	private void updatePowered(World world, int x, int y, int z, int metadata) {
 		if (!getPowered(metadata)) {
-			world.scheduleTick(x, y, z, rawId, 2);
+			world.scheduleTick(x, y, z, id, 2);
 		}
 	}
 
 	protected void updateNeighbors(World world, int x, int y, int z, int metadata) {
 		int facing = getFacing(metadata);
-		int frontX = x - Directions.X_OFFSET[facing];
-		int frontY = y - Directions.Y_OFFSET[facing];
-		int frontZ = z - Directions.Z_OFFSET[facing];
+		int behindX = x - Directions.X_OFFSET[facing];
+		int behindY = y - Directions.Y_OFFSET[facing];
+		int behindZ = z - Directions.Z_OFFSET[facing];
 
-		world.updateBlock(frontX, frontY, frontZ, rawId);
-		world.updateNeighborsExcept(frontX, frontY, frontZ, rawId, facing);
+		world.updateBlock(behindX, behindY, behindZ, id);
+		world.updateNeighborsExcept(behindX, behindY, behindZ, id, facing);
 	}
 
 	@Override

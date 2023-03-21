@@ -25,7 +25,7 @@ public class RedstoneWireBlockMixin {
 		)
 	)
 	private static void shouldConnectTo(IWorld world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, int neighborBlockId) {
-		if (neighborBlockId == ModBlocks.OBSERVER.rawId) {
+		if (neighborBlockId == ModBlocks.OBSERVER.id) {
 			cir.setReturnValue(side == ObserverBlock.getFacing(world.getBlockMetadata(x, y, z)));
 		}
 	}

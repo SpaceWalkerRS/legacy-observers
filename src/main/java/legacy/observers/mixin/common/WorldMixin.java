@@ -129,7 +129,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 
 		int blockId = getBlock(x, y, z);
 
-		if (blockId != ModBlocks.OBSERVER.rawId) {
+		if (blockId != ModBlocks.OBSERVER.id) {
 			return;
 		}
 

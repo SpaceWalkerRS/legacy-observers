@@ -2,7 +2,7 @@
 # The latest versions are available at https://lambdaurora.dev/tools/import_quilt.html
 minecraft = "1.6.4"
 quilt_loader = "0.18.3"
-feather_mappings = "1.6.4+build.2"
+feather_mappings = "1.6.4+build.3"
 nests = "1.6.4+build.1"
 
 [libraries]
