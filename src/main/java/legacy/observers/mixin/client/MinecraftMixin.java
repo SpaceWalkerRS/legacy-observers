@@ -12,14 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import legacy.observers.resource.ModResourcePack;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resource.pack.IResourcePack;
+import net.minecraft.client.resource.pack.ResourcePack;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
 
-	@Shadow @Final private List<IResourcePack> defaultResourcePacks;
+	@Shadow @Final private List<ResourcePack> defaultResourcePacks;
 
-	private IResourcePack modResourcePack = new ModResourcePack();
+	private ResourcePack modResourcePack = new ModResourcePack();
 
 	@Inject(
 		method = "addDefaultResourcePacks",

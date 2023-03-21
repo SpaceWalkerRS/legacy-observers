@@ -19,7 +19,7 @@ public class BlockMixin {
 		)
 	)
 	private static void init(CallbackInfo ci) {
-		register(218, "observer", new ObserverBlock().spriteId("observer").strength(3.0F).setId("observer"));
+		register(218, "observer", new ObserverBlock().spriteName("observer").strength(3.0F).setKey("observer"));
 	}
 
 	private static void register(int id, String key, Block block) {

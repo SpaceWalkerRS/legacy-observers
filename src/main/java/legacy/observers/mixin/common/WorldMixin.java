@@ -140,10 +140,10 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 			CashReportCategory category = report.addCategory("Block being updated");
 			category.add("Source block type", () -> {
 				try {
-					return String.format("ID #%d (%s // %s)", Block.getRawId(neighborBlock), neighborBlock.getTranslationKey(),
+					return String.format("ID #%d (%s // %s)", Block.getId(neighborBlock), neighborBlock.getTranslationKey(),
 						neighborBlock.getClass().getCanonicalName());
 				} catch (Throwable throwable) {
-					return "ID #" + Block.getRawId(neighborBlock);
+					return "ID #" + Block.getId(neighborBlock);
 				}
 			});
 			CashReportCategory.addBlockDetails(category, x, y, z, block, getBlockMetadata(x, y, z));
