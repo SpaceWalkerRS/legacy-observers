@@ -13,12 +13,12 @@ import legacy.observers.block.ObserverBlock;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.render.BlockRenderer;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.WorldView;
 
 @Mixin(BlockRenderer.class)
 public class BlockRendererMixin {
 
-	@Shadow private IWorld world;
+	@Shadow private WorldView world;
 	@Shadow private int northFaceRotation;
 	@Shadow private int southFaceRotation;
 	@Shadow private int eastFaceRotation;
@@ -26,10 +26,10 @@ public class BlockRendererMixin {
 	@Shadow private int topFaceRotation;
 	@Shadow private int bottomFaceRotation;
 
-	@Shadow private boolean renderSimpleBlock(Block block, int x, int y, int z) { return false; }
+	@Shadow private boolean tessellate(Block block, int x, int y, int z) { return false; }
 
 	@Inject(
-		method = "renderBlock(Lnet/minecraft/block/Block;III)Z",
+		method = "tessellateBlock(Lnet/minecraft/block/Block;III)Z",
 		cancellable = true,
 		at = @At(
 			value = "INVOKE",
@@ -44,7 +44,7 @@ public class BlockRendererMixin {
 	}
 
 	@ModifyVariable(
-		method = "renderBlockItem",
+		method = "render(Lnet/minecraft/block/Block;IF)V",
 		index = 2,
 		argsOnly = true,
 		at = @At(
@@ -60,7 +60,7 @@ public class BlockRendererMixin {
 	}
 
 	@Inject(
-		method = "renderBlockItem",
+		method = "render(Lnet/minecraft/block/Block;IF)V",
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/block/Block;getRenderType()I"
@@ -71,7 +71,7 @@ public class BlockRendererMixin {
 	}
 
 	@Inject(
-		method = "renderBlockItem",
+		method = "render(Lnet/minecraft/block/Block;IF)V",
 		at = @At(
 			value = "INVOKE",
 			shift = Shift.AFTER,
@@ -134,7 +134,7 @@ public class BlockRendererMixin {
 			break;
 		}
 
-		boolean success = renderSimpleBlock(block, x, y, z);
+		boolean success = tessellate(block, x, y, z);
 
 		northFaceRotation = 0;
 		southFaceRotation = 0;

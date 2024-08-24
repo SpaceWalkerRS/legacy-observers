@@ -13,8 +13,8 @@ import net.minecraft.entity.living.LivingEntity;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Directions;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 
 public class ObserverBlock extends Block {
 
@@ -90,8 +90,8 @@ public class ObserverBlock extends Block {
 		updateNeighbors(world, x, y, z, metadata);
 	}
 
-	public void update(World world, int x, int y, int z, int neighborBlockId, int neighborX, int neighborY, int neighborZ) {
-		if (!world.isClient) {
+	public void neighborStateChanged(World world, int x, int y, int z, int neighborBlock, int neighborX, int neighborY, int neighborZ) {
+		if (!world.isMultiplayer) {
 			int metadata = world.getBlockMetadata(x, y, z);
 			int facing = getFacing(metadata);
 			int frontX = x + Directions.X_OFFSET[facing];
@@ -116,29 +116,29 @@ public class ObserverBlock extends Block {
 		int behindY = y - Directions.Y_OFFSET[facing];
 		int behindZ = z - Directions.Z_OFFSET[facing];
 
-		world.updateBlock(behindX, behindY, behindZ, id);
+		world.neighborChanged(behindX, behindY, behindZ, id);
 		world.updateNeighborsExcept(behindX, behindY, behindZ, id, facing);
 	}
 
 	@Override
-	public boolean isPowerSource() {
+	public boolean isSignalSource() {
 		return true;
 	}
 
 	@Override
-	public int getEmittedStrongPower(IWorld world, int x, int y, int z, int dir) {
-		return getEmittedWeakPower(world, x, y, z, dir);
+	public int getDirectSignal(WorldView world, int x, int y, int z, int dir) {
+		return getSignal(world, x, y, z, dir);
 	}
 
 	@Override
-	public int getEmittedWeakPower(IWorld world, int x, int y, int z, int dir) {
+	public int getSignal(WorldView world, int x, int y, int z, int dir) {
 		int metadata = world.getBlockMetadata(x, y, z);
 		return getPowered(metadata) && getFacing(metadata) == dir ? 15 : 0;
 	}
 
 	@Override
 	public void onAdded(World world, int x, int y, int z) {
-		if (!world.isClient) {
+		if (!world.isMultiplayer) {
 			int metadata = world.getBlockMetadata(x, y, z);
 
 			if (getPowered(metadata)) {
