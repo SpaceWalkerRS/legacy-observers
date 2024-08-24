@@ -6,6 +6,8 @@
 	"mixins": [
 		"common.BlockMixin",
 		"common.CraftingManagerMixin",
+		"common.GamerulesMixin",
+		"common.NoteBlockMixin",
 		"common.RedstoneWireBlockMixin",
 		"common.WorldMixin"
 	],
