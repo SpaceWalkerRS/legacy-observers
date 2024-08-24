@@ -13,21 +13,21 @@ import legacy.observers.world.ModWorld;
 import legacy.observers.world.SetBlockFlags;
 
 import net.minecraft.block.Block;
-import net.minecraft.util.crash.CashReportCategory;
 import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.crash.CrashReportCategory;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.Directions;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import net.minecraft.world.WorldData;
 
 @Mixin(World.class)
-public abstract class WorldMixin implements IWorld, ModWorld {
+public abstract class WorldMixin implements WorldView, ModWorld {
 
-	@Shadow private boolean isClient;
+	@Shadow private boolean isMultiplayer;
 	@Shadow private WorldData data;
 
-	@Shadow private void updateBlock(int x, int y, int z, Block neighborBlock) { }
+	@Shadow private void neighborChanged(int x, int y, int z, Block neighborBlock) { }
 
 	@Redirect(
 		method = "setBlockWithMetadata",
@@ -47,7 +47,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 		)
 	)
 	private void updateObserversOnBlockChange(int x, int y, int z, Block block, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
-		if (!isClient && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
+		if (!isMultiplayer && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
 			updateObservers(x, y, z, block);
 		}
 	}
@@ -70,7 +70,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 		)
 	)
 	private void updateObserversOnBlockMetadataChange(int x, int y, int z, int metadata, int flags, CallbackInfoReturnable<Boolean> cir) {
-		if (!isClient && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
+		if (!isMultiplayer && (flags & SetBlockFlags.SKIP_UPDATE_OBSERVERS) == 0 && cir.getReturnValue()) {
 			updateObservers(x, y, z, getBlock(x, y, z));
 		}
 	}
@@ -107,7 +107,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Override
 	public void updateNeighbors(int x, int y, int z, Block block, boolean updateObservers) {
 		for (int dir : UPDATE_ORDER) {
-			updateBlock(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block);
+			neighborChanged(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block);
 		}
 		if (updateObservers) {
 			updateObservers(x, y, z, block);
@@ -117,13 +117,13 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Override
 	public void updateObservers(int x, int y, int z, Block block) {
 		for (int dir : UPDATE_ORDER) {
-			updateObserver(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block, x, y, z);
+			neighborStateChanged(x + Directions.X_OFFSET[dir], y + Directions.Y_OFFSET[dir], z + Directions.Z_OFFSET[dir], block, x, y, z);
 		}
 	}
 
 	@Override
-	public void updateObserver(int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
-		if (isClient) {
+	public void neighborStateChanged(int x, int y, int z, Block neighborBlock, int neighborX, int neighborY, int neighborZ) {
+		if (isMultiplayer) {
 			return;
 		}
 
@@ -134,19 +134,18 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 		}
 
 		try {
-			ModBlocks.OBSERVER.update((World)(Object)this, x, y, z, neighborBlock, neighborX, neighborY, neighborZ);
+			ModBlocks.OBSERVER.neighborStateChanged((World)(Object)this, x, y, z, neighborBlock, neighborX, neighborY, neighborZ);
 		} catch (Throwable t) {
 			CrashReport report = CrashReport.of(t, "Exception while updating neighbors");
-			CashReportCategory category = report.addCategory("Block being updated");
+			CrashReportCategory category = report.addCategory("Block being updated");
 			category.add("Source block type", () -> {
 				try {
-					return String.format("ID #%d (%s // %s)", Block.getId(neighborBlock), neighborBlock.getTranslationKey(),
-						neighborBlock.getClass().getCanonicalName());
+					return String.format("ID #%d (%s // %s)", Block.getId(neighborBlock), neighborBlock.getTranslationKey(), neighborBlock.getClass().getCanonicalName());
 				} catch (Throwable throwable) {
 					return "ID #" + Block.getId(neighborBlock);
 				}
 			});
-			CashReportCategory.addBlockDetails(category, x, y, z, block, getBlockMetadata(x, y, z));
+			CrashReportCategory.addBlockDetails(category, x, y, z, block, getBlockMetadata(x, y, z));
 
 			throw new CrashException(report);
 		}
