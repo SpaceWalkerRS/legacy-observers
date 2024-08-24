@@ -10,8 +10,7 @@
 		"common.WorldMixin"
 	],
 	"client": [
-		"client.BlockRendererMixin",
-		"client.MinecraftMixin"
+		"client.BlockRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -10,13 +10,13 @@ import legacy.observers.block.ModBlocks;
 import legacy.observers.block.ObserverBlock;
 
 import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.WorldView;
 
 @Mixin(RedstoneWireBlock.class)
 public class RedstoneWireBlockMixin {
 
 	@Inject(
-		method = "shouldConnectTo(Lnet/minecraft/world/IWorld;IIII)Z",
+		method = "shouldConnectTo(Lnet/minecraft/world/WorldView;IIII)Z",
 		locals = LocalCapture.CAPTURE_FAILHARD,
 		cancellable = true,
 		at = @At(
@@ -24,8 +24,8 @@ public class RedstoneWireBlockMixin {
 			target = "Lnet/minecraft/block/Block;REDSTONE_WIRE:Lnet/minecraft/block/RedstoneWireBlock;"
 		)
 	)
-	private static void shouldConnectTo(IWorld world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, int neighborBlockId) {
-		if (neighborBlockId == ModBlocks.OBSERVER.id) {
+	private static void shouldConnectTo(WorldView world, int x, int y, int z, int side, CallbackInfoReturnable<Boolean> cir, int neighborBlock) {
+		if (neighborBlock == ModBlocks.OBSERVER.id) {
 			cir.setReturnValue(side == ObserverBlock.getFacing(world.getBlockMetadata(x, y, z)));
 		}
 	}

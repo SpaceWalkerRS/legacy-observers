@@ -11,12 +11,12 @@ public interface ModWorld {
 		3  // south
 	};
 
-	void onBlockChanged(int x, int y, int z, int blockId, boolean updateObservers);
+	void onBlockChanged(int x, int y, int z, int block, boolean updateObservers);
 
-	void updateNeighbors(int x, int y, int z, int blockId, boolean updateObservers);
+	void updateNeighbors(int x, int y, int z, int block, boolean updateObservers);
 
-	void updateObservers(int x, int y, int z, int blockId);
+	void updateObservers(int x, int y, int z, int block);
 
-	void updateObserver(int x, int y, int z, int neighborBlockId, int neighborX, int neighborY, int neighborZ);
+	void neighborStateChanged(int x, int y, int z, int neighborBlock, int neighborX, int neighborY, int neighborZ);
 
 }
