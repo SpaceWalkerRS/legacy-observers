@@ -21,6 +21,6 @@ public interface ModWorld {
 
 	void updateObservers(BlockPos pos, Block block);
 
-	void updateObserver(BlockPos pos, Block neighborBlock, BlockPos neighborPos);
+	void neighborStateChanged(BlockPos pos, Block neighborBlock, BlockPos neighborPos);
 
 }

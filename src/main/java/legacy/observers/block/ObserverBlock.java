@@ -5,6 +5,8 @@ import java.util.Random;
 import legacy.observers.world.SetBlockFlags;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockMirror;
+import net.minecraft.block.BlockRotation;
 import net.minecraft.block.PistonBaseBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockState;
@@ -15,8 +17,8 @@ import net.minecraft.entity.living.LivingEntity;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 
 public class ObserverBlock extends Block {
 
@@ -42,6 +44,16 @@ public class ObserverBlock extends Block {
 	}
 
 	@Override
+	public BlockState rotate(BlockState state, BlockRotation rotation) {
+		return state.set(FACING, rotation.apply(state.get(FACING)));
+	}
+
+	@Override
+	public BlockState mirror(BlockState state, BlockMirror mirror) {
+		return state.rotate(mirror.rotation(state.get(FACING)));
+	}
+
+	@Override
 	public void tick(World world, BlockPos pos, BlockState state, Random random) {
 		if (state.get(POWERED)) {
 			world.setBlockState(pos, state.set(POWERED, false), SetBlockFlags.UPDATE_CLIENTS);
@@ -53,7 +65,7 @@ public class ObserverBlock extends Block {
 		updateNeighbors(world, pos, state);
 	}
 
-	public void update(BlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
+	public void neighborStateChanged(BlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
 		if (!world.isClient && pos.offset(state.get(FACING)).equals(neighborPos)) {
 			update(state, world, pos);
 		}
@@ -69,22 +81,22 @@ public class ObserverBlock extends Block {
 		Direction facing = state.get(FACING);
 		BlockPos behind = pos.offset(facing.getOpposite());
 
-		world.updateBlock(behind, this);
+		world.neighborChanged(behind, this);
 		world.updateNeighborsExcept(behind, this, facing);
 	}
 
 	@Override
-	public boolean isPowerSource(BlockState state) {
+	public boolean isSignalSource(BlockState state) {
 		return true;
 	}
 
 	@Override
-	public int getEmittedStrongPower(BlockState state, IWorld world, BlockPos pos, Direction dir) {
-		return state.getEmittedWeakPower(world, pos, dir);
+	public int getDirectSignal(BlockState state, WorldView world, BlockPos pos, Direction dir) {
+		return state.getSignal(world, pos, dir);
 	}
 
 	@Override
-	public int getEmittedWeakPower(BlockState state, IWorld world, BlockPos pos, Direction dir) {
+	public int getSignal(BlockState state, WorldView world, BlockPos pos, Direction dir) {
 		return state.get(POWERED) && state.get(FACING) == dir ? 15 : 0;
 	}
 

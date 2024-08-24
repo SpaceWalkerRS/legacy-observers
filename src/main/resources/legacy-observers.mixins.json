@@ -11,8 +11,7 @@
 		"common.WorldMixin"
 	],
 	"client": [
-		"client.ItemRendererMixin",
-		"client.MinecraftMixin"
+		"client.ItemRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

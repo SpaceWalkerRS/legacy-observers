@@ -14,23 +14,23 @@ import legacy.observers.world.SetBlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockState;
-import net.minecraft.util.crash.CashReportCategory;
 import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.crash.CrashReportCategory;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import net.minecraft.world.WorldData;
 import net.minecraft.world.gen.WorldGeneratorType;
 
 @Mixin(World.class)
-public abstract class WorldMixin implements IWorld, ModWorld {
+public abstract class WorldMixin implements WorldView, ModWorld {
 
 	@Shadow private boolean isClient;
 	@Shadow private WorldData data;
 
-	@Shadow private void updateBlock(BlockPos pos, Block neighborBlock) { }
+	@Shadow private void neighborChanged(BlockPos pos, Block neighborBlock) { }
 
 	@Redirect(
 		method = "setBlockState",
@@ -89,7 +89,7 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Override
 	public void updateNeighbors(BlockPos pos, Block block, boolean updateObservers) {
 		for (Direction dir : UPDATE_ORDER) {
-			updateBlock(pos.offset(dir), block);
+			neighborChanged(pos.offset(dir), block);
 		}
 		if (updateObservers) {
 			updateObservers(pos, block);
@@ -99,12 +99,12 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 	@Override
 	public void updateObservers(BlockPos pos, Block block) {
 		for (Direction dir : UPDATE_ORDER) {
-			updateObserver(pos.offset(dir), block, pos);
+			neighborStateChanged(pos.offset(dir), block, pos);
 		}
 	}
 
 	@Override
-	public void updateObserver(BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
+	public void neighborStateChanged(BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
 		if (isClient) {
 			return;
 		}
@@ -116,19 +116,18 @@ public abstract class WorldMixin implements IWorld, ModWorld {
 		}
 
 		try {
-			ModBlocks.OBSERVER.update(state, (World)(Object)this, pos, neighborBlock, neighborPos);
+			ModBlocks.OBSERVER.neighborStateChanged(state, (World)(Object)this, pos, neighborBlock, neighborPos);
 		} catch (Throwable t) {
 			CrashReport report = CrashReport.of(t, "Exception while updating neighbors");
-			CashReportCategory category = report.addCategory("Block being updated");
+			CrashReportCategory category = report.addCategory("Block being updated");
 			category.add("Source block type", () -> {
 				try {
-					return String.format("ID #%d (%s // %s)", Block.getId(neighborBlock), neighborBlock.getTranslationKey(),
-						neighborBlock.getClass().getCanonicalName());
+					return String.format("ID #%d (%s // %s)", Block.getId(neighborBlock), neighborBlock.getTranslationKey(), neighborBlock.getClass().getCanonicalName());
 				} catch (Throwable throwable) {
 					return "ID #" + Block.getId(neighborBlock);
 				}
 			});
-			CashReportCategory.addBlockDetails(category, pos, state);
+			CrashReportCategory.addBlockDetails(category, pos, state);
 
 			throw new CrashException(report);
 		}
