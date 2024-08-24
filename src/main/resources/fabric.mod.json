@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "legacy-observers",
+	"version": "${version}",
+	"name": "Legacy Observers",
+	"description": "Bringing observers to legacy versions.",
+	"authors": [
+		"Space Walker"
+	],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/legacy-observers",
+		"issues": "https://github.com/SpaceWalkerRS/legacy-observers/issues",
+		"sources": "https://github.com/SpaceWalkerRS/legacy-observers"
+	},
+	"license": "MIT",
+	"icon": "assets/legacy/observers/icon.png",
+	"environment": "*",
+	"entrypoints": {
+	},
+	"mixins": [
+		"legacy-observers.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"minecraft": "1.8.x",
+		"osl-resource-loader": ">=0.5.3"
+	}
+}

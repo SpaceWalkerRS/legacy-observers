@@ -15,8 +15,8 @@ import net.minecraft.entity.living.LivingEntity;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 
 public class ObserverBlock extends Block {
 
@@ -53,7 +53,7 @@ public class ObserverBlock extends Block {
 		updateNeighbors(world, pos, state);
 	}
 
-	public void update(BlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
+	public void neighborStateChanged(BlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
 		if (!world.isClient && pos.offset(state.get(FACING)).equals(neighborPos)) {
 			update(state, world, pos);
 		}
@@ -69,22 +69,23 @@ public class ObserverBlock extends Block {
 		Direction facing = state.get(FACING);
 		BlockPos behind = pos.offset(facing.getOpposite());
 
-		world.updateBlock(behind, this);
+		world.neighborChanged(behind, this);
 		world.updateNeighborsExcept(behind, this, facing);
 	}
 
 	@Override
-	public boolean isPowerSource() {
+
+	public boolean isSignalSource() {
 		return true;
 	}
 
 	@Override
-	public int getEmittedStrongPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
-		return getEmittedWeakPower(world, pos, state, dir);
+	public int getDirectSignal(WorldView world, BlockPos pos, BlockState state, Direction dir) {
+		return this.getSignal(world, pos, state, dir);
 	}
 
 	@Override
-	public int getEmittedWeakPower(IWorld world, BlockPos pos, BlockState state, Direction dir) {
+	public int getSignal(WorldView world, BlockPos pos, BlockState state, Direction dir) {
 		return state.get(POWERED) && state.get(FACING) == dir ? 15 : 0;
 	}
 

@@ -14,7 +14,7 @@ import net.minecraft.client.render.item.ItemRenderer;
 @Mixin(ItemRenderer.class)
 public class ItemRendererMixin {
 
-	@Shadow private void registerModel(Block block, String id) { }
+	@Shadow private void registerModel(Block block, String key) { }
 
 	@Inject(
 		method = "registerGuiModels",

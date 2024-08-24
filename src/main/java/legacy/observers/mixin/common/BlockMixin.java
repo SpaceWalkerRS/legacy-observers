@@ -13,7 +13,7 @@ import net.minecraft.block.Block;
 @Mixin(Block.class)
 public class BlockMixin {
 
-	@Shadow private static void register(int rawId, String name, Block block) { }
+	@Shadow private static void register(int id, String key, Block block) { }
 
 	@Inject(
 		method = "init",
