@@ -1,3 +1,3 @@
 # Legacy Observers
 
-Bringing observers to legacy versions.
+Observers and tweaks for legacy versions.
