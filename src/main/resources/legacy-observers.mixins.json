@@ -4,16 +4,8 @@
 	"package": "legacy.observers.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"common.BlockMixin",
-		"common.CraftingManagerMixin",
 		"common.GamerulesMixin",
-		"common.ItemMixin",
-		"common.NoteBlockMixin",
-		"common.RedstoneWireBlockMixin",
-		"common.WorldMixin"
-	],
-	"client": [
-		"client.ItemRendererMixin"
+		"common.NoteBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
