@@ -22,7 +22,6 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.14.21",
-		"minecraft": "1.10.x",
-		"osl-resource-loader": ">=0.5.3"
+		"minecraft": "1.11.x"
 	}
 }
